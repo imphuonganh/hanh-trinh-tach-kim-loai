@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Liệu Tương Tác: Tách Kim Loại</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8FBC8F;
+            --secondary: #7B9095;
+            --bg-color: #F8F9FA;
+            --text-color: #2C3E50;
+            --white: #ffffff;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --accent: #F39C12;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: var(--white);
+            padding: 15px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        /* Mindmap Styles */
+        .mindmap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 0;
+        }
+        .node {
+            background: var(--primary);
+            color: var(--white);
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(143, 188, 143, 0.3);
+            transition: transform 0.3s ease;
+            min-width: 250px;
+        }
+        .node:hover { transform: scale(1.05); }
+        .arrow { font-size: 24px; color: var(--secondary); font-weight: bold;}
+
+        /* Map Styles */
+        .map-wrapper {
+            position: relative;
+            max-width: 650px;
+            height: 900px; 
+            margin: 0 auto;
+            background-size: contain; 
+            border-radius: 15px;
+            border: 2px solid #eef0f2;
+            background-color: #000000; 
+        }
+        /* CSS cho thẻ SVG để hiển thị vừa vặn với khung */
+        .map-wrapper svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .marker {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: var(--danger);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+            animation: pulse 1.5s infinite;
+            border: 2px solid white;
+            z-index: 2;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(231, 76, 60, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+        
+        .m-laocai { top: 12%; left: 25%; } 
+        .m-thachkhe { top: 38%; left: 35%; } 
+        .m-taynguyen { top: 68%; left: 45%; } 
+        
+        .popup {
+            display: none;
+            position: absolute;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            z-index: 10;
+            width: 280px;
+            text-align: left;
+            border-left: 5px solid var(--primary);
+        }
+
+        /* Slider Styles */
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: #f8f9fa;
+            border: 1px solid #eef0f2;
+        }
+        .slider-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            width: 100%;
+        }
+        .slide {
+            min-width: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+        .slider-btn:hover { background: #7ab07a; }
+        .prev-btn { left: 10px; }
+        .next-btn { right: 10px; }
+        
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 50%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: #000;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Chemical Equation Styles */
+        .equation {
+            background: #eef2f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .reaction-arrow {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .reaction-condition {
+            font-size: 0.6em;
+            color: #d35400;
+            margin-bottom: -5px;
+        }
+        .arrow-line {
+            font-size: 1.5em;
+            line-height: 0.8;
+            color: var(--text-color);
+        }
+
+        /* Infographic */
+        .info-panel {
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #eef0f2;
+            margin-bottom: 30px;
+        }
+        .stat-bar-container { margin-bottom: 20px; }
+        .stat-bar-container p { font-weight: 600; margin-bottom: 8px; font-size: 16px;}
+        .stat-bar-bg {
+            background: #e9ecef;
+            border-radius: 20px;
+            height: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            transition: width 1.5s ease-in-out;
+        }
+        
+        .recycle-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 768px) {
+            .recycle-layout { grid-template-columns: 1fr; }
+            .video-wrapper { width: 100%; }
+        }
+
+        /* Quiz Styles */
+        .quiz-container { margin-top: 20px; }
+        .question-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .question-card h4 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option {
+            padding: 15px;
+            background: var(--bg-color);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        .option:hover { background: #e2e6ea; border-color: #cbd3da; }
+        .option.correct { background: #d4edda; border-color: var(--success); color: #155724; }
+        .option.wrong { background: #f8d7da; border-color: var(--danger); color: #721c24; }
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #e8f4f8;
+            border-left: 5px solid var(--secondary);
+            display: none;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="tab-btn active" onclick="openTab(event, 'home')">Home</button>
+        <button class="tab-btn" onclick="openTab(event, 'map')">Quặng và khoáng vật kim loại phổ biến</button>
+        <button class="tab-btn" onclick="openTab(event, 'methods')">Phương pháp tách kim loại</button>
+        <button class="tab-btn" onclick="openTab(event, 'recycle')">Tái chế kim loại và phát triển bền vững</button>
+        <button class="tab-btn" onclick="openTab(event, 'quiz')">Luyện tập</button>
+    </header>
+
+    <div class="container">
+        
+        <!-- Tab 1: Home / Mindmap -->
+        <div id="home" class="tab-content active">
+            <h2>Hành Trình Tách Kim Loại</h2>
+            <div class="mindmap">
+                <div class="node" style="background: var(--secondary)">Trạng thái tự nhiên<br><small>(Đa số là Hợp chất)</small></div>
+                <div class="arrow">↓</div>
+                <div class="node">Nguyên tắc chung<br><small>Khử ion kim loại (Mⁿ⁺ + ne → M)</small></div>
+                <div class="arrow">↓</div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                    <div class="node" style="background: var(--accent)">Điện phân nóng chảy<br><small>(KL hoạt động mạnh)</small></div>
+                    <div class="node" style="background: var(--accent)">Nhiệt luyện<br><small>(KL trung bình)</small></div>
+                    <div class="node" style="background: var(--accent)">Thủy luyện / Điện phân dung dịch<br><small>(KL yếu)</small></div>
+                </div>
+                <div class="arrow">↓</div>
+                <div class="node" style="background: var(--success)">Tái chế kim loại & Phát triển bền vững</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Map -->
+        <div id="map" class="tab-content">
+            <h2>Bản đồ Quặng và Khoáng vật Việt Nam</h2>
+            <p style="text-align: center; margin-bottom: 25px; color: #555;">Click vào các điểm đánh dấu trên bản đồ để tra cứu thông tin quặng mỏ.</p>
+            
+            <div class="map-wrapper" onclick="hideAllPopups()">
+                
+                <!-- ============================================================== -->
+                <!-- XÓA DÒNG NÀY VÀ DÁN TOÀN BỘ MÃ SVG BẢN ĐỒ CỦA BẠN VÀO ĐÂY       -->
+                <!-- ============================================================== -->
+
+                <!-- Marker Lào Cai -->
+                <div class="marker m-laocai" onclick="showPopup(event, 'pop-laocai')"></div>
+                <div class="popup" id="pop-laocai" style="top: 12%; left: 25%;">
+                    <strong style="color: var(--primary); font-size: 18px;">Lào Cai / Bắc Kạn</strong><hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+                    <strong>Quặng:</strong> Chalcopyrite / Zinc blende<br>
+                    <strong>Công thức:</strong> CuFeS₂ / ZnS<br>
+                    <strong>Kim loại:</strong> Đồng (Cu) / Kẽm (Zn)
+                </div>
+
+                <!-- Marker Hà Tĩnh -->
+                <div class="marker m-thachkhe" onclick="showPopup(event, 'pop-thachkhe')"></div>
+                <div class="popup" id="pop-thachkhe" style="top: 38%; left: 35%;">
+                    <strong style="color: var(--primary); font-size: 18px;">Hà Tĩnh / Thái Nguyên</strong><hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+                    <strong>Quặng:</strong> Hematite, Magnetite<br>
+                    <strong>Công thức:</strong> Fe₂O₃, Fe₃O₄<br>
+                    <strong>Kim loại:</strong> Sắt (Fe)
+                </div>
+
+                <!-- Marker Tây Nguyên -->
+                <div class="marker m-taynguyen" onclick="showPopup(event, 'pop-taynguyen')"></div>
+                <div class="popup" id="pop-taynguyen" style="top: 68%; left: 45%;">
+                    <strong style="color: var(--primary); font-size: 18px;">Tây Nguyên</strong><hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+                    <strong>Quặng:</strong> Bauxite<br>
+                    <strong>Công thức:</strong> Al₂O₃.2H₂O<br>
+                    <strong>Kim loại:</strong> Nhôm (Al)
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Methods (Slider) -->
+        <div id="methods" class="tab-content">
+            <h2>Phương Pháp Tách Kim Loại</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #555;">Sử dụng nút mũi tên để chuyển đổi giữa các phương pháp.</p>
+            
+            <div class="slider-container">
+                <button class="slider-btn prev-btn" onclick="moveSlide(-1)">&#10094;</button>
+                <button class="slider-btn next-btn" onclick="moveSlide(1)">&#10095;</button>
+                
+                <div class="slider-track" id="slider-track">
+                    <!-- Slide 1 -->
+                    <div class="slide">
+                        <h3 style="color: var(--primary); margin-bottom: 5px; text-align: center; font-size: 22px;">Điện phân nóng chảy</h3>
+                        <p style="text-align: center; margin-bottom: 20px; color: #666;">(Áp dụng cho kim loại hoạt động mạnh: Al, Na, Mg)</p>
+                        
+                        <div class="video-wrapper">
+                            <iframe src="https://www.youtube.com/embed/6P90li2PHfA" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        
+                        <div style="max-width: 80%; margin: 0 auto;">
+                            <p><strong>Nguyên tắc:</strong> Dùng dòng điện một chiều để khử ion kim loại.</p>
+                            <p><strong>Minh họa Sản xuất Nhôm:</strong> Hòa tan quặng Bauxite (Al₂O₃) trong cryolite nóng chảy để hạ nhiệt độ nóng chảy.</p>
+                            
+                            <div class="equation">
+                                <span>2Al₂O₃</span>
+                                <span class="reaction-arrow">
+                                    <span class="reaction-condition">đpnc, cryolite</span>
+                                    <span class="arrow-line">⟶</span>
+                                </span>
+                                <span>4Al + 3O₂</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slide 2 -->
+                    <div class="slide">
+                        <h3 style="color: var(--primary); margin-bottom: 5px; text-align: center; font-size: 22px;">Nhiệt luyện</h3>
+                        <p style="text-align: center; margin-bottom: 20px; color: #666;">(Áp dụng cho kim loại hoạt động trung bình: Fe, Zn)</p>
+                        
+                        <div class="video-wrapper">
+                            <iframe src="https://www.youtube.com/embed/qD2LPYZjdw4" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        
+                        <div style="max-width: 80%; margin: 0 auto;">
+                            <p><strong>Nguyên tắc:</strong> Dùng chất khử (như C, CO, H₂, Al) để khử oxit kim loại ở nhiệt độ cao.</p>
+                            <p><strong>Minh họa Luyện Gang:</strong> Khử quặng sắt bằng khí CO trong lò cao.</p>
+                            
+                            <div class="equation">
+                                <span>Fe₂O₃ + 3CO</span>
+                                <span class="reaction-arrow">
+                                    <span class="reaction-condition">t°</span>
+                                    <span class="arrow-line">⟶</span>
+                                </span>
+                                <span>2Fe + 3CO₂</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slide 3 -->
+                    <div class="slide">
+                        <h3 style="color: var(--primary); margin-bottom: 5px; text-align: center; font-size: 22px;">Thủy luyện & Điện phân dung dịch</h3>
+                        <p style="text-align: center; margin-bottom: 20px; color: #666;">(Áp dụng cho kim loại hoạt động yếu: Cu, Ag)</p>
+                        
+                        <div class="video-wrapper">
+                            <iframe src="https://www.youtube.com/embed/CCFvsbHHqSc" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        
+                        <div style="max-width: 80%; margin: 0 auto;">
+                            <p><strong>Nguyên tắc:</strong> Dùng kim loại mạnh đẩy kim loại yếu ra khỏi muối, hoặc dùng dòng điện khử ion kim loại trong dung dịch.</p>
+                            <p><strong>Minh họa Tinh luyện Đồng:</strong></p>
+                            
+                            <div class="equation">
+                                <span>CuSO₄ + H₂O</span>
+                                <span class="reaction-arrow">
+                                    <span class="reaction-condition">đpdd</span>
+                                    <span class="arrow-line">⟶</span>
+                                </span>
+                                <span>Cu + ½O₂ + H₂SO₄</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Recycle -->
+        <div id="recycle" class="tab-content">
+            <h2>Tái Chế Kim Loại & Phát Triển Bền Vững</h2>
+            
+            <div class="recycle-layout">
+                <!-- Cột Infographic -->
+                <div class="info-panel">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Infographic: Tiết kiệm năng lượng</h3>
+                    <p style="margin-bottom: 25px; color: #555;">Tái chế kim loại giúp tiết kiệm một lượng năng lượng khổng lồ so với việc sản xuất kim loại nguyên sinh từ quặng thô.</p>
+                    
+                    <div class="stat-bar-container">
+                        <p>Tái chế Thép (Tiết kiệm ~50%)</p>
+                        <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 50%; background: #34495E;">50%</div></div>
+                    </div>
+                    
+                    <div class="stat-bar-container">
+                        <p>Tái chế Đồng (Tiết kiệm ~85%)</p>
+                        <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 85%; background: #E67E22;">85%</div></div>
+                    </div>
+                    
+                    <div class="stat-bar-container">
+                        <p>Tái chế Nhôm (Tiết kiệm năng lượng gấp 22 lần)</p>
+                        <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 95%; background: #3498DB;">Giảm 95% năng lượng</div></div>
+                    </div>
+                </div>
+
+                <!-- Cột Video Tái Chế Đồng Thủ Công -->
+                <div class="info-panel">
+                    <h3 style="margin-bottom: 15px; color: var(--secondary);">Video: Tái chế đồng thủ công</h3>
+                    <p style="margin-bottom: 15px; color: #555;">Quy trình bóc tách và thu hồi đồng từ các phế liệu, linh kiện điện tử cũ.</p>
+                    <div class="video-wrapper" style="width: 100%; padding-bottom: 56.25%;">
+                        <iframe src="https://www.youtube.com/embed/8_f4_oflFM8" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #e8f4f8; padding: 30px; border-radius: 15px; text-align: center; border: 2px dashed var(--primary); margin-top: 20px;">
+                <h3 style="color: var(--primary); margin-bottom: 10px;">Khu vực Nộp/Trưng bày Sản phẩm Dự án</h3>
+                <p style="margin-bottom: 20px;">Các nhóm học sinh nộp đường dẫn (link) thiết kế Poster hoặc Infographic tuyên truyền tại địa phương vào đây.</p>
+                <button style="padding: 12px 25px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;">Nộp sản phẩm ngay</button>
+            </div>
+        </div>
+
+        <!-- Tab 5: Quiz -->
+        <div id="quiz" class="tab-content">
+            <h2>Luyện Tập Trực Tuyến</h2>
+            <p style="text-align: center; margin-bottom: 25px; color: #666;">Chọn đáp án đúng nhất. Hệ thống sẽ tự động chấm điểm và cung cấp lời giải chi tiết.</p>
+            <div id="quiz-container" class="quiz-container"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab Navigation
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            
+            // Tái kích hoạt hiệu ứng thanh tiến trình khi mở tab Tái chế
+            if(tabName === 'recycle') {
+                let bars = document.getElementsByClassName('stat-bar-fill');
+                for(let j=0; j<bars.length; j++) {
+                    let w = bars[j].style.width;
+                    bars[j].style.width = '0';
+                    setTimeout(() => { bars[j].style.width = w; }, 100);
+                }
+            }
+        }
+
+        // Map Popups
+        function showPopup(event, popupId) {
+            event.stopPropagation();
+            hideAllPopups();
+            document.getElementById(popupId).style.display = 'block';
+        }
+        function hideAllPopups() {
+            let popups = document.getElementsByClassName('popup');
+            for(let i = 0; i < popups.length; i++) {
+                popups[i].style.display = 'none';
+            }
+        }
+        // Đóng popup khi click ra ngoài bản đồ
+        document.addEventListener('click', hideAllPopups);
+
+        // Slider Logic
+        let currentSlide = 0;
+        function moveSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            currentSlide += direction;
+            
+            if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            } else if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            }
+            
+            const track = document.getElementById('slider-track');
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        }
+
+        // Quiz Data - 10 câu hỏi
+        const quizData = [
+            {
+                q: "Câu 1: Thành phần chính của quặng magnetite (mỏ Thạch Khê, Hà Tĩnh) là gì?",
+                options: ["Fe₂O₃", "Fe₃O₄", "FeCO₃", "FeS₂"],
+                ans: 1,
+                exp: "Quặng magnetite có thành phần chính là Fe₃O₄."
+            },
+            {
+                q: "Câu 2: Nguyên tắc chung để tách kim loại ra khỏi hợp chất là gì?",
+                options: ["Oxi hóa ion kim loại", "Khử ion kim loại", "Khử nguyên tử kim loại", "Thủy phân hợp chất"],
+                ans: 1,
+                exp: "Trong hợp chất, kim loại tồn tại ở dạng ion dương. Để thu được kim loại tự do, cần thực hiện quá trình khử ion kim loại: Mⁿ⁺ + ne → M."
+            },
+            {
+                q: "Câu 3: Phương pháp điện phân nóng chảy được dùng để điều chế kim loại nào?",
+                options: ["Cu", "Fe", "Na", "Ag"],
+                ans: 2,
+                exp: "Sodium (Na) là kim loại có tính khử rất mạnh (nhóm IA), không có chất khử thông thường nào khử được ion Na⁺, nên phải dùng phương pháp điện phân nóng chảy."
+            },
+            {
+                q: "Câu 4: Kim loại nào trong các kim loại sau có thể được điều chế bằng phương pháp nhiệt luyện, phương pháp thuỷ luyện và phương pháp điện phân dung dịch?",
+                options: ["Sodium", "Sắt", "Thủy ngân", "Calcium"],
+                ans: 1,
+                exp: "Sắt (Fe) là kim loại có mức độ hoạt động hóa học trung bình, có thể áp dụng linh hoạt các phương pháp điều chế."
+            },
+            {
+                q: "Câu 5: Phương pháp thủy luyện thường áp dụng để điều chế kim loại nào sau đây?",
+                options: ["K", "Ca", "Al", "Cu"],
+                ans: 3,
+                exp: "Đồng (Cu) có tính khử yếu; có thể hoà tan hợp chất chứa đồng trong dung dịch acid rồi khử ion Cu²⁺ bằng kim loại mạnh hơn (như Fe)."
+            },
+            {
+                q: "Câu 6: Đề xuất phương pháp phù hợp để tách thiếc (Sn) từ quặng casiterite (SnO₂)?",
+                options: ["Điện phân nóng chảy", "Điện phân dung dịch", "Thủy luyện", "Nhiệt luyện"],
+                ans: 3,
+                exp: "Thiếc có độ hoạt động hóa học trung bình, phương pháp phù hợp để tách Sn ra khỏi quặng (SnO₂) là nhiệt luyện, dùng chất khử (than cốc) ở nhiệt độ cao."
+            },
+            {
+                q: "Câu 7: Trong quá trình sản xuất nhôm, vì sao phải hòa tan Al₂O₃ vào cryolite nóng chảy trước khi điện phân?",
+                options: ["Để tăng độ cứng cho nhôm", "Để hạ nhiệt độ nóng chảy của hỗn hợp", "Để khử tạp chất có trong quặng", "Để tạo màu sắc đặc trưng"],
+                ans: 1,
+                exp: "Hòa tan Al₂O₃ vào cryolite giúp hạ nhiệt độ nóng chảy của hỗn hợp (từ >2000°C xuống ~900°C), tiết kiệm đáng kể năng lượng."
+            },
+            {
+                q: "Câu 8: Quá trình sản xuất đồng tái chế giúp tiết kiệm khoảng bao nhiêu phần trăm năng lượng so với sản xuất từ quặng thô?",
+                options: ["22%", "50%", "71%", "85%"],
+                ans: 3,
+                exp: "Theo số liệu, sản xuất đồng tái chế từ phế liệu giúp tiết kiệm khoảng 85% năng lượng so với luyện đồng nguyên sinh."
+            },
+            {
+                q: "Câu 9: Chất thải nguy hại có tính kiềm cao sinh ra từ quá trình chế biến quặng bauxite được gọi là gì?",
+                options: ["Bùn đỏ", "Xỉ than", "Nước nặng", "Khí lò cao"],
+                ans: 0,
+                exp: "Bùn đỏ là chất thải chứa kiềm cao từ việc chế biến quặng bauxite; tái chế nhôm giúp hạn chế khai thác quặng, qua đó giảm thiểu bùn đỏ."
+            },
+            {
+                q: "Câu 10: Chất khử chính tham gia phản ứng khử quặng oxit sắt trong lò cao luyện gang là gì?",
+                options: ["H₂", "C", "CO", "Al"],
+                ans: 2,
+                exp: "Trong lò cao, than cốc cháy tạo ra khí CO. Khí CO chính là tác nhân khử Fe₂O₃ hoặc Fe₃O₄ thành sắt."
+            }
+        ];
+
+        // Render Quiz
+        const quizContainer = document.getElementById('quiz-container');
+        quizData.forEach((item, index) => {
+            let html = `
+                <div class="question-card">
+                    <h4>${item.q}</h4>
+                    <div class="options">
+                        ${item.options.map((opt, i) => `
+                            <div class="option" onclick="checkAnswer(this, ${i}, ${item.ans}, 'exp-${index}')">${String.fromCharCode(65 + i)}. ${opt}</div>
+                        `).join('')}
+                    </div>
+                    <div id="exp-${index}" class="feedback"><strong>Giải thích: </strong> ${item.exp}</div>
+                </div>
+            `;
+            quizContainer.innerHTML += html;
+        });
+
+        // Check Quiz Answer
+        function checkAnswer(element, selected, correct, expId) {
+            let parent = element.parentElement;
+            let options = parent.getElementsByClassName('option');
+            
+            // Nếu đã trả lời thì không cho chọn lại
+            if(parent.classList.contains('answered')) return;
+            parent.classList.add('answered');
+
+            if (selected === correct) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('wrong');
+                options[correct].classList.add('correct');
+            }
+            
+            // Hiện giải thích
+            document.getElementById(expId).style.display = 'block';
+        }
+    </script>
+</body>
+</html>
